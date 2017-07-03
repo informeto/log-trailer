@@ -30,7 +30,7 @@ http://localhost:3000
 ```
 
 
-If you want to test the streamer, you can also use writeLogs script, just mention files you want the writer to add logs to. By default it adds 20 lines to the log file
+If you want to test the streamer, you can also use writeLogs script, just mention files you want the writer to add logs to. By default it adds 20 lines to the log file. The files are written under logs/ directory
 
 ```
 sh writeLogs.sh one.log two.log three.log

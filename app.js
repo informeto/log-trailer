@@ -78,6 +78,7 @@ function unsubscribe(filename){
 
 
 
+console.log('access the viewer client  at localhost:3000');
 
 
 
