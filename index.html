@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link rel='stylesheet prefetch' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css'>
+    <link rel='stylesheet prefetch' href='//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css'>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Roboto');
+        body{
+          background-color: #092B40;
+          color: black ;
+          font-size: 1.8em;
+          font-family: 'Roboto', sans-serif;
+        }
+        
+        @media screen and (max-width: 750px){
+            .container{
+               margin: 0 30px; 
+            }
+        }
+        #input-group{
+          box-shadow: 0 1px 1px;
+          border-radius: 10px;
+        }
+
+        #filename{
+         width: 500px !important;
+         height: 60px !important;
+         border-radius: 10px 0 0 10px;
+        }
+        .jumbotron{
+          padding: 20px;
+          background: #778899;
+        }
+        .input-group-addon{
+          border-radius: 0 10px 10px 0 !important;
+          background: #fff;
+          border-collapse: collapse !important;
+          
+        }
+        
+        
+        .att{
+          font-size: 1.1em;
+        }
+        
+
+        #log-trail{
+          margin: 20px 5%;
+          border-radius: 5px;
+        }
+
+        .tabcontainer{
+            max-height: 500px;
+            overflow-y: scroll;
+        }
+
+    </style>
+</head>
+<body>
+    <div class = "row jumbotron">
+    <div id = "search-query" class = "container">
+      <form class = "form-inline" id="start-trail">
+        <div class = "input-group" id = "input-group">
+          <input type = "search" name = "filename" id = "filename" class = "form-control" placeholder = "filename">
+          <div class = "input-group-addon" id="start-trailer-btn" onclick="start_trailing()">
+            <span>Show Trail</span>
+          </div>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+
+<div id="trailer-tabs" >
+  <ul id="tab-links">
+  </ul>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script>
+  $(document).ready(function(){
+        $("#start-trail").submit(function(e){
+            start_trailing();
+            e.preventDefault();
+        });
+        $tab = $("#trailer-tabs");
+        $tab.tabs();
+  });
+
+
+  var subscriptions  = [];
+  var socket = io.connect('http://localhost:3000');
+  
+  function start_trailing(){
+    filename = $("#filename").val().trim();
+    if(filename){
+        subscribe(filename);
+    };
+  }
+
+  function closetab(e){
+    filename = event.target.parentElement.textContent.trim();
+    console.log(filename)
+    unsubscribe(filename);
+  }
+
+
+  function subscribe(filename){
+      if( subscriptions.indexOf(filename) > -1 ){
+        toastr.warning( filename, 'already subscribed' );
+        return;
+      }
+      console.log('subscribing', filename);
+      socket.emit('subscribe', { 'filename': filename });
+
+      var tablink = '<li id ="tablink-'+filename+'"><a href="#trail-'+filename+'">'+filename+'</a> <span class="ui-icon ui-icon-circle-close ui-closable-tab" onclick="closetab()"></span></li>';  
+      var trailerview = '<div id ="trail-'+filename+'"  class="tabcontainer" ></div>';
+
+      $('#tab-links').append(tablink);
+      $('#trailer-tabs').append(trailerview);
+ 
+      subscriptions.push(filename);
+
+      $tab.tabs("refresh");
+
+      $tab.tabs("option", "active", subscriptions.length - 1);
+
+      toastr.success('Trailing '+filename);
+
+      socket.on(filename, function (data) {
+        filename = data.filename;
+
+        var line = document.createElement("P");                       
+        var t = document.createTextNode(data.new_line); 
+
+        line.appendChild(t); 
+        trailer = document.getElementById("trail-"+filename);
+
+        trailer.appendChild (line);
+        trailer.scrollTop = trailer.scrollHeight;
+      });
+      
+      
+    }
+
+ function unsubscribe(filename) {
+     subIndex = subscriptions.indexOf(filename);
+     if( subIndex > -1 ){
+        document.getElementById("tablink-"+filename).outerHTML='';
+        document.getElementById("trail-"+filename).outerHTML='';
+
+        subscriptions.splice(subIndex, 1);
+        socket.emit('unsubscribe', { 'filename': filename }); 
+        socket.removeAllListeners(filename);
+
+        toastr.success('Stopped trailing '+filename);
+
+      }else{
+        console.log('subscription doesnt exist');
+      }
+  }     
+
+
+</script>
+
+
+</body>
+</html>
+  
+
+
+
+
+
