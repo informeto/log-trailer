@@ -91,6 +91,7 @@
             e.preventDefault();
         });
         $tab = $("#trailer-tabs");
+        $tab.tabs();
   });
 
 
@@ -127,7 +128,7 @@
  
       subscriptions.push(filename);
       
-      $tab.tabs();
+      $tab.tabs('refresh');
 
       $tab.tabs("option", "active", subscriptions.length - 1);
 
